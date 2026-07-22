@@ -39,6 +39,8 @@ Status: planned — prioritas pengerjaan berikutnya.
 - Kartu peserta ujian dengan QR.
 - Penetapan pengawas, daftar hadir, berita acara, dan dokumen PDF.
 
+Slice selesai: kalender, jadwal UTS/UAS, eligibility KRS-presensi-keuangan, kartu peserta PDF, dan QR verifikasi. Titik lanjut Phase 16 adalah penetapan pengawas, daftar hadir ujian, dan berita acara PDF.
+
 ### Phase 17 — Tugas akhir, PKL, dan KKN
 
 Status: planned.

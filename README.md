@@ -31,6 +31,7 @@ Modul Registrasi & KRS tersedia pada `/academic/registration`. Jalankan migratio
 Modul Nilai, KHS, dan Transkrip tersedia pada `/academic/grades`. Ambang huruf mutu default dapat disesuaikan melalui `SIAKAD_GRADE_A_MIN`, `SIAKAD_GRADE_B_PLUS_MIN`, `SIAKAD_GRADE_B_MIN`, `SIAKAD_GRADE_C_PLUS_MIN`, `SIAKAD_GRADE_C_MIN`, dan `SIAKAD_GRADE_D_MIN` sebelum deployment production.
 Aturan batas SKS dari IPS sebelumnya dapat disesuaikan melalui keluarga environment `SIAKAD_CREDIT_GPA_*`. Nilai resolver disimpan sebagai snapshot pada registrasi agar histori tidak berubah saat konfigurasi diperbarui.
 Ambang early warning dapat disesuaikan melalui `SIAKAD_GUIDANCE_LOW_GPA_THRESHOLD`, `SIAKAD_GUIDANCE_LOW_ATTENDANCE_THRESHOLD`, dan `SIAKAD_GUIDANCE_REMINDER_HOURS_BEFORE`. Scheduler Laravel menjalankan `guidance:send-reminders` setiap jam; pada development dapat diuji manual dengan `php artisan guidance:send-reminders`.
+Ambang presensi minimum untuk kartu peserta ujian dapat disesuaikan melalui `SIAKAD_EXAM_ATTENDANCE_THRESHOLD` (default 75 persen).
 
 Modul lanjutan tersedia pada:
 
@@ -40,6 +41,7 @@ Modul lanjutan tersedia pada:
 - `/documents` untuk penerbitan KRS/KHS/transkrip/tagihan/kwitansi, unduhan PDF, registri versi, pencabutan, QR, dan verifikasi publik;
 - `/services` untuk pengajuan layanan mahasiswa, persetujuan berjenjang, SLA, lampiran privat, surat PDF, QR verifikasi, dan pencabutan dokumen;
 - `/academic/guidance` untuk jadwal bimbingan dosen wali, catatan privat, tindak lanjut, dan early warning mahasiswa;
+- `/academic/calendar` untuk kalender akademik, jadwal UTS/UAS, pemeriksaan kelayakan, dan kartu peserta ujian;
 - `/finance` untuk ledger, VA, pembayaran, pembebasan tagihan, dan rekonsiliasi callback;
 - `/reports` untuk ringkasan eksekutif lintas akademik, keuangan, PMB, dan EDOM;
 - `/admin/audit-logs` untuk audit trail serta ekspor CSV yang menyamarkan secret;

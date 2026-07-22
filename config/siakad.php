@@ -33,4 +33,7 @@ return [
         'low_attendance_threshold' => (float) env('SIAKAD_GUIDANCE_LOW_ATTENDANCE_THRESHOLD', 75),
         'reminder_hours_before' => (int) env('SIAKAD_GUIDANCE_REMINDER_HOURS_BEFORE', 24),
     ],
+    'exam' => [
+        'attendance_threshold' => (float) env('SIAKAD_EXAM_ATTENDANCE_THRESHOLD', 75),
+    ],
 ];

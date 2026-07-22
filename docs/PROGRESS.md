@@ -216,4 +216,10 @@ Selesai pada slice ini: workspace bimbingan role-aware untuk Mahasiswa, Dosen, P
 Verifikasi: PHPUnit regresi penuh 176 test / 1.554 assertions, test workflow Phase 14 10 test / 134 assertions, `npm run typecheck`, `npm run build` hijau (2.407 modul), 188 route terdaftar, dan migration `2026_07_22_190000`–`2026_07_22_200000` berhasil pada MySQL Laragon.  
 Penutupan: kalender ketersediaan dan panel rencana intervensi tampil di workspace dengan modal input responsif; reminder terjadwal berjalan melalui `guidance:send-reminders` setiap jam; ambang early warning dapat dikonfigurasi; konflik jadwal dan ownership dosen wali tervalidasi; serta pengujian domain khusus telah ditambahkan. Kebijakan intervensi institusi dapat diperluas kemudian tanpa mengubah histori yang sudah tercatat.
 
+## Checkpoint Phase 16 - Kalender akademik dan penjadwalan ujian
+
+Status: in progress (slice fondasi selesai). Kalender akademik terpusat berbasis periode, agenda publik, jadwal UTS/UAS dengan mode luring/daring/hybrid, deteksi konflik ruangan-dosen-mahasiswa, validasi kelas/periode dan kapasitas, eligibility dari KRS-presensi-keuangan, kartu peserta PDF dengan QR, halaman verifikasi publik, policy, permission, audit, migration, seeder, dan modal UI sudah tersedia. Titik lanjut: penetapan pengawas, daftar hadir ujian, dan berita acara PDF.
+
+Verifikasi sesi ini: lint PHP statis dengan `php -n -l`, `npm run typecheck`, dan `npm run build` hijau. PHPUnit/Artisan belum dapat dijalankan karena PHP CLI default 8.1.10 sementara dependency proyek mensyaratkan PHP >=8.4.1.
+
 Verifikasi tambahan: PHPUnit khusus Phase 15 3 test / 15 assertions; regresi penuh 179 test / 1.569 assertions; `npm run typecheck`, `npm run build` hijau (2.407 modul); migration `2026_07_22_190000`–`2026_07_22_210000`, scheduler, dan seeder berhasil pada MySQL Laragon.
