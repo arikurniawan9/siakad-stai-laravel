@@ -1,7 +1,7 @@
 # Roadmap Fase Lanjutan SIAKAD
 
 Terakhir diperbarui: 22 Juli 2026  
-Status aplikasi terakhir: Phase 14 selesai dan sudah diterapkan ke database lokal.  
+Status aplikasi terakhir: Phase 15 selesai dan sudah diterapkan ke database lokal.  
 Catatan penting: aktivitas production, deployment, dan integrasi BSI riil belum dikerjakan sampai ada arahan khusus dan kontrak resmi.
 
 ## Urutan pengerjaan yang disepakati
@@ -20,7 +20,7 @@ Status: complete — selesai dan terverifikasi pada 22 Juli 2026.
 
 ### Phase 15 — Bimbingan akademik dan early warning
 
-Status: planned — prioritas pengerjaan berikutnya.
+Status: complete — selesai dan terverifikasi pada 22 Juli 2026.
 
 - Jadwal konsultasi mahasiswa dan dosen PA.
 - Catatan bimbingan privat serta rencana tindak lanjut.
@@ -31,7 +31,7 @@ Status: planned — prioritas pengerjaan berikutnya.
 
 ### Phase 16 — Kalender akademik dan ujian
 
-Status: planned.
+Status: planned — prioritas pengerjaan berikutnya.
 
 - Kalender akademik terpusat dan agenda berdasarkan semester.
 - Penjadwalan UTS/UAS dengan deteksi bentrok ruang, dosen, dan mahasiswa.
@@ -91,4 +91,4 @@ Satu fase hanya dianggap selesai jika memiliki:
 
 ## Titik mulai sesi berikutnya
 
-Mulai dari **Phase 15 — Bimbingan akademik dan early warning**. Sebelum implementasi, audit model `Student`, `Lecturer`, `AttendanceRecord`, `StudentBill`, `SemesterRegistration`, hasil nilai, notification, audit log, serta aturan akses catatan privat. Gunakan relasi dosen PA yang sudah tersedia dan integrasikan tindak lanjut dengan layanan mahasiswa bila diperlukan. Production dan adapter BSI riil tetap berada di luar scope.
+Mulai dari **Phase 16 — Kalender akademik dan ujian**. Sebelum implementasi, audit periode akademik, jadwal kuliah, ruangan, enrollment approved, presensi, tagihan, dan komponen `ModalForm`. Production dan adapter BSI riil tetap berada di luar scope.

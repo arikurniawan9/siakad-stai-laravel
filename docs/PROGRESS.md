@@ -209,9 +209,11 @@ Catatan kebijakan: isi template, format nomor, SLA, urutan approval, dan kebutuh
 
 Roadmap Phase 15–18 dan backlog fitur pendukung tersimpan permanen pada `docs/NEXT-PHASES.md`. Prioritas sesi berikutnya adalah Phase 15 — bimbingan akademik dan early warning.
 
-## Checkpoint Phase 15 — Bimbingan akademik dan early warning (slice fondasi)
+## Checkpoint Phase 15 — Bimbingan akademik dan early warning
 
-Status: in progress  
+Status: complete (scope non-production Phase 15)  
 Selesai pada slice ini: workspace bimbingan role-aware untuk Mahasiswa, Dosen, Prodi, Staff, Pimpinan, dan Admin; pengajuan jadwal konsultasi melalui modal dengan mode daring/luring/telepon; konfirmasi, penyelesaian, pembatalan, dan pencatatan status; catatan bimbingan privat dengan tindak lanjut; early warning otomatis dari IPK, presensi, tunggakan, dan status mahasiswa; acknowledgement/resolution; notifikasi dosen/mahasiswa; audit trail; slot ketersediaan dosen; rencana intervensi dengan status dan target; permission dan menu sidebar; migration MySQL; serta layout responsif dengan kartu metrik dan aksen premium.  
 Verifikasi: PHPUnit regresi penuh 176 test / 1.554 assertions, test workflow Phase 14 10 test / 134 assertions, `npm run typecheck`, `npm run build` hijau (2.407 modul), 188 route terdaftar, dan migration `2026_07_22_190000`–`2026_07_22_200000` berhasil pada MySQL Laragon.  
-Lanjutan Phase 15: kalender ketersediaan dan panel rencana intervensi kini tampil di workspace dengan modal input responsif; reminder terjadwal berjalan melalui `guidance:send-reminders` setiap jam dan ambang dapat diatur melalui `SIAKAD_GUIDANCE_LOW_GPA_THRESHOLD`, `SIAKAD_GUIDANCE_LOW_ATTENDANCE_THRESHOLD`, serta `SIAKAD_GUIDANCE_REMINDER_HOURS_BEFORE`. Penyempurnaan kebijakan intervensi institusi dan pengujian domain khusus masih perlu diselesaikan sebelum fase ditutup.
+Penutupan: kalender ketersediaan dan panel rencana intervensi tampil di workspace dengan modal input responsif; reminder terjadwal berjalan melalui `guidance:send-reminders` setiap jam; ambang early warning dapat dikonfigurasi; konflik jadwal dan ownership dosen wali tervalidasi; serta pengujian domain khusus telah ditambahkan. Kebijakan intervensi institusi dapat diperluas kemudian tanpa mengubah histori yang sudah tercatat.
+
+Verifikasi tambahan: PHPUnit khusus Phase 15 3 test / 15 assertions; regresi penuh 179 test / 1.569 assertions; `npm run typecheck`, `npm run build` hijau (2.407 modul); migration `2026_07_22_190000`–`2026_07_22_210000`, scheduler, dan seeder berhasil pada MySQL Laragon.
