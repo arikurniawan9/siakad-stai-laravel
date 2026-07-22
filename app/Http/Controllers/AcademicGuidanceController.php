@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -58,6 +59,10 @@ final class AcademicGuidanceController extends Controller
         $this->authorizeCreate($request); $user = $request->user(); $data = $request->validated();
         $student = $user->active_role === 'Mahasiswa' ? $user->student : Student::with('academicAdvisor.user')->findOrFail($data['student_id'] ?? 0);
         $this->authorizeStudent($user, $student); $lecturerId = $student->academic_advisor_id; abort_unless($lecturerId, 422, 'Mahasiswa belum memiliki dosen wali.');
+        $starts = \Carbon\Carbon::parse($data['starts_at']); $ends = \Carbon\Carbon::parse($data['ends_at']);
+        if (AcademicGuidanceAppointment::query()->where('lecturer_id', $lecturerId)->whereIn('status', ['pending', 'confirmed'])->where('starts_at', '<', $ends)->where('ends_at', '>', $starts)->exists()) throw ValidationException::withMessages(['starts_at' => 'Dosen wali sudah memiliki jadwal lain pada waktu tersebut.']);
+        $hasSlots = GuidanceAvailabilitySlot::query()->where('lecturer_id', $lecturerId)->where('weekday', $starts->dayOfWeekIso)->where('is_active', true)->exists();
+        if ($hasSlots && ! GuidanceAvailabilitySlot::query()->where('lecturer_id', $lecturerId)->where('weekday', $starts->dayOfWeekIso)->where('is_active', true)->where('starts_at', '<=', $starts->format('H:i:s'))->where('ends_at', '>=', $ends->format('H:i:s'))->exists()) throw ValidationException::withMessages(['starts_at' => 'Waktu pengajuan berada di luar slot ketersediaan dosen wali.']);
         $appointment = AcademicGuidanceAppointment::create([...$data, 'student_id' => $student->id, 'lecturer_id' => $lecturerId, 'created_by' => $user->id, 'status' => 'pending']);
         if ($student->academicAdvisor?->user_id) $notifications->send($student->academicAdvisor->user_id, 'guidance_appointment', 'Permintaan bimbingan baru', $student->user?->name.' mengajukan jadwal bimbingan.', '/academic/guidance');
         $this->audit($request, 'appointment_created', 'academic_guidance_appointment', $appointment->id, ['student_id' => $student->id]);
@@ -88,7 +93,7 @@ final class AcademicGuidanceController extends Controller
 
     public function storeAvailability(GuidanceAvailabilityRequest $request): RedirectResponse
     {
-        $this->authorizeManage($request); abort_unless($request->user()->lecturer, 403); $slot = GuidanceAvailabilitySlot::create([...$request->validated(), 'lecturer_id' => $request->user()->lecturer->id]); $this->audit($request, 'availability_created', 'guidance_availability_slot', $slot->id, []); return back()->with('success', 'Slot ketersediaan bimbingan tersimpan.');
+        $this->authorizeManage($request); abort_unless($request->user()->lecturer, 403); $data = $request->validated(); $lecturerId = $request->user()->lecturer->id; $overlap = GuidanceAvailabilitySlot::query()->where('lecturer_id', $lecturerId)->where('weekday', $data['weekday'])->where('is_active', true)->where('starts_at', '<', $data['ends_at'])->where('ends_at', '>', $data['starts_at'])->exists(); if ($overlap) throw ValidationException::withMessages(['starts_at' => 'Slot ketersediaan bertabrakan dengan slot yang sudah ada.']); $slot = GuidanceAvailabilitySlot::create([...$data, 'lecturer_id' => $lecturerId]); $this->audit($request, 'availability_created', 'guidance_availability_slot', $slot->id, []); return back()->with('success', 'Slot ketersediaan bimbingan tersimpan.');
     }
 
     public function storeIntervention(StudentInterventionRequest $request, NotificationService $notifications): RedirectResponse
