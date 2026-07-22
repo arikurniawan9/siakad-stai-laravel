@@ -1,0 +1,26 @@
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: siakad
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - siakad-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - siakad-redis:/data
+
+volumes:
+  siakad-mysql:
+  siakad-redis:

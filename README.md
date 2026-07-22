@@ -1,0 +1,73 @@
+# SIAKAD OS — Laravel 13
+
+Portal akademik terpadu untuk PMB, akademik, LMS, EDOM, keuangan, dan rekonsiliasi VA. Proyek ini dibangun sebagai aplikasi baru di samping baseline Next.js; aplikasi sumber tidak disentuh.
+
+## Stack
+
+- Laravel 13 + PHP 8.3/8.4
+- MySQL 8.4 InnoDB dan Redis
+- Inertia 3 + React 19 + TypeScript + Vite
+- Tailwind CSS 4
+- Fortify, Spatie Laravel Permission, Predis, Dompdf, dan BaconQrCode
+
+## Menjalankan lokal
+
+Pastikan PHP 8.3/8.4, Composer, Node.js 22+, dan Docker tersedia.
+
+```text
+docker compose up -d
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+npm install
+npm run dev
+```
+
+Pada Windows Laragon, gunakan PHP 8.4 melalui menu Laragon atau jalankan Artisan dengan path PHP 8.4 secara eksplisit. `docker-compose.yml` menyediakan MySQL 8.4 dan Redis dengan kredensial development lokal yang tidak boleh dipakai production.
+
+Suite test memakai SQLite in-memory, sehingga extension `pdo_sqlite` dan `sqlite3` harus aktif pada PHP CLI 8.4. Format NIM hasil konversi PMB dapat diatur melalui `SIAKAD_NIM_FORMAT` (placeholder `{PROGRAM}`, `{YEAR}`, `{SEQUENCE}`) dan `SIAKAD_NIM_SEQUENCE_DIGITS`; default-nya `{PROGRAM}{YEAR}{SEQUENCE}` dengan empat digit sequence.
+
+Modul Registrasi & KRS tersedia pada `/academic/registration`. Jalankan migration dan seeder terbaru agar tabel registrasi, permission role, serta menu sidebar tersedia.
+Modul Nilai, KHS, dan Transkrip tersedia pada `/academic/grades`. Ambang huruf mutu default dapat disesuaikan melalui `SIAKAD_GRADE_A_MIN`, `SIAKAD_GRADE_B_PLUS_MIN`, `SIAKAD_GRADE_B_MIN`, `SIAKAD_GRADE_C_PLUS_MIN`, `SIAKAD_GRADE_C_MIN`, dan `SIAKAD_GRADE_D_MIN` sebelum deployment production.
+Aturan batas SKS dari IPS sebelumnya dapat disesuaikan melalui keluarga environment `SIAKAD_CREDIT_GPA_*`. Nilai resolver disimpan sebagai snapshot pada registrasi agar histori tidak berubah saat konfigurasi diperbarui.
+Ambang early warning dapat disesuaikan melalui `SIAKAD_GUIDANCE_LOW_GPA_THRESHOLD`, `SIAKAD_GUIDANCE_LOW_ATTENDANCE_THRESHOLD`, dan `SIAKAD_GUIDANCE_REMINDER_HOURS_BEFORE`. Scheduler Laravel menjalankan `guidance:send-reminders` setiap jam; pada development dapat diuji manual dengan `php artisan guidance:send-reminders`.
+
+Modul lanjutan tersedia pada:
+
+- `/academic/lms` untuk materi, tugas, pengumpulan, penilaian, dan forum kelas;
+- `/academic/edom` untuk instrumen serta evaluasi anonim. Ambang perlindungan komentar dapat diatur lewat `SIAKAD_EDOM_ANONYMITY_THRESHOLD` (default 3 respons);
+- `/academic/attendance` untuk pertemuan presensi, kode check-in terenkripsi, rekap status, dan penguncian setelah sesi ditutup;
+- `/documents` untuk penerbitan KRS/KHS/transkrip/tagihan/kwitansi, unduhan PDF, registri versi, pencabutan, QR, dan verifikasi publik;
+- `/services` untuk pengajuan layanan mahasiswa, persetujuan berjenjang, SLA, lampiran privat, surat PDF, QR verifikasi, dan pencabutan dokumen;
+- `/academic/guidance` untuk jadwal bimbingan dosen wali, catatan privat, tindak lanjut, dan early warning mahasiswa;
+- `/finance` untuk ledger, VA, pembayaran, pembebasan tagihan, dan rekonsiliasi callback;
+- `/reports` untuk ringkasan eksekutif lintas akademik, keuangan, PMB, dan EDOM;
+- `/admin/audit-logs` untuk audit trail serta ekspor CSV yang menyamarkan secret;
+- `/notifications` untuk kotak masuk notifikasi per pengguna.
+
+Pemulihan password tersedia melalui `/forgot-password`. Konfigurasikan `MAIL_*` ke layanan email institusi pada production; driver log hanya sesuai untuk development.
+
+Tidak ada akun demo yang dibuat oleh seeder. Buat akun administrator secara sadar setelah migrasi:
+
+```text
+php artisan tinker
+$user = App\Models\User::create(['name' => 'Administrator', 'username' => 'admin', 'email' => 'admin@kampus.ac.id', 'password' => 'ganti-dengan-password-kuat']);
+$user->assignRole('Admin');
+```
+
+## Quality gates
+
+```text
+npm run typecheck
+npm run build
+php artisan test
+php artisan route:list
+```
+
+## Konfigurasi sensitif
+
+Turnstile dan BSI sengaja nonaktif pada development. Isi `TURNSTILE_*` dan `BSI_*` hanya dari secret manager/environment deployment. Kontrak onboarding resmi BSI adalah sumber kebenaran endpoint, signature, header, sertifikat, dan response code; adapter real belum boleh diklaim siap sebelum kontrak itu tersedia.
+
+Pada lingkungan lokal, `BSI_VA_DRIVER=fake` menerbitkan VA simulasi deterministik saat invoice PMB dibuat. Invoice lama dapat diproses dengan `php artisan pmb:issue-missing-virtual-accounts`. Adapter fake ditolak pada production dan tidak boleh dianggap sebagai nomor VA bank yang nyata.
+
+Dokumen tracking ada di `docs/PARITY-MATRIX.md`, `docs/DECISIONS.md`, `docs/PROGRESS.md`, dan `docs/NEXT-PHASES.md`. File terakhir menjadi titik lanjut apabila sesi pengerjaan terputus.
