@@ -3,13 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Academic\ExamScheduleService;
+use App\Domain\Academic\ExamOperationsService;
 use App\Http\Requests\AcademicCalendarEventRequest;
+use App\Http\Requests\ExamAttendanceRequest;
+use App\Http\Requests\ExamInvigilatorRequest;
+use App\Http\Requests\ExamReportRequest;
 use App\Http\Requests\ExamScheduleRequest;
 use App\Models\AcademicCalendarEvent;
 use App\Models\AcademicTerm;
 use App\Models\ClassGroup;
 use App\Models\ExamSchedule;
+use App\Models\Lecturer;
 use App\Models\Room;
+use App\Services\NotificationService;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -34,15 +40,22 @@ final class AcademicCalendarController extends Controller
         $user = $request->user(); $manager = in_array($user->active_role, ['Admin', 'Prodi', 'Staff'], true);
         $termId = $filters['academic_term_id'] ?? null; $month = $filters['month'] ?? null;
         $eventQuery = AcademicCalendarEvent::query()->with('academicTerm:id,code,name')->when($termId, fn (Builder $query) => $query->where('academic_term_id', $termId))->when(! $manager, fn (Builder $query) => $query->where('is_published', true))->when($month, fn (Builder $query) => $query->whereBetween('starts_at', [$month.'-01 00:00:00', date('Y-m-t 23:59:59', strtotime($month.'-01'))]))->orderBy('starts_at');
-        $examQuery = ExamSchedule::query()->with(['academicTerm:id,code,name', 'classGroup.course:id,code,name,credits', 'classGroup.lecturer:id,name,nidn', 'room:id,building_id,name,code,capacity', 'room.building:id,name'])->when($termId, fn (Builder $query) => $query->where('academic_term_id', $termId))->when(! $manager, fn (Builder $query) => $query->where('status', 'published'))->when($user->active_role === 'Dosen', fn (Builder $query) => $query->whereHas('classGroup', fn (Builder $class) => $class->where('lecturer_id', $user->lecturer?->id ?? 0)))->when($user->active_role === 'Mahasiswa', fn (Builder $query) => $query->whereHas('classGroup.enrollments', fn (Builder $enrollment) => $enrollment->where('status', 'enrolled')->whereHas('registration', fn (Builder $registration) => $registration->where('student_id', $user->student?->id ?? 0)->where('status', 'approved'))))->when($month, fn (Builder $query) => $query->whereBetween('exam_date', [$month.'-01', date('Y-m-t', strtotime($month.'-01'))]))->orderBy('exam_date')->orderBy('starts_at');
+        $examQuery = ExamSchedule::query()->with(['academicTerm:id,code,name', 'classGroup.course:id,code,name,credits', 'classGroup.lecturer:id,name,nidn', 'room:id,building_id,name,code,capacity', 'room.building:id,name', 'invigilators.lecturer:id,user_id,name,nidn', 'report'])->withCount('participants')->when($termId, fn (Builder $query) => $query->where('academic_term_id', $termId))->when(! $manager, fn (Builder $query) => $query->where('status', 'published'))->when($user->active_role === 'Dosen', fn (Builder $query) => $query->where(function (Builder $scope) use ($user): void { $scope->whereHas('classGroup', fn (Builder $class) => $class->where('lecturer_id', $user->lecturer?->id ?? 0))->orWhereHas('invigilators', fn (Builder $assignment) => $assignment->where('lecturer_id', $user->lecturer?->id ?? 0)); }))->when($user->active_role === 'Mahasiswa', fn (Builder $query) => $query->whereHas('classGroup.enrollments', fn (Builder $enrollment) => $enrollment->where('status', 'enrolled')->whereHas('registration', fn (Builder $registration) => $registration->where('student_id', $user->student?->id ?? 0)->where('status', 'approved'))))->when($month, fn (Builder $query) => $query->whereBetween('exam_date', [$month.'-01', date('Y-m-t', strtotime($month.'-01'))]))->orderBy('exam_date')->orderBy('starts_at');
         $exams = $examQuery->get();
         if ($user->active_role === 'Mahasiswa' && $user->student) $exams->each(fn (ExamSchedule $exam) => $exam->setAttribute('eligibility', $examService->eligibility($exam, $user->student)));
+        $exams->each(function (ExamSchedule $exam) use ($user): void {
+            $canOperate = Gate::forUser($user)->allows('operate', $exam);
+            $exam->setAttribute('can_operate', $canOperate);
+            $exam->setAttribute('can_assign', Gate::forUser($user)->allows('assign', $exam));
+            if ($canOperate) $exam->load('participants');
+        });
 
         return Inertia::render('Academic/Calendar', [
             'filters' => ['academic_term_id' => (string) ($termId ?? ''), 'month' => $month ?? ''], 'events' => $eventQuery->get(), 'exams' => $exams,
             'termOptions' => AcademicTerm::query()->orderByDesc('starts_on')->get(['id', 'code', 'name', 'semester', 'starts_on', 'ends_on']),
             'classOptions' => $manager ? ClassGroup::query()->where('is_active', true)->with(['course:id,code,name,credits', 'academicTerm:id,code,name'])->orderByDesc('academic_term_id')->orderBy('name')->get(['id', 'academic_term_id', 'course_id', 'name']) : [],
             'roomOptions' => $manager ? Room::query()->where('is_active', true)->with('building:id,name')->orderBy('name')->get(['id', 'building_id', 'name', 'code', 'capacity']) : [],
+            'lecturerOptions' => $manager && $user->can('exams.assign') ? Lecturer::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'nidn']) : [],
             'abilities' => ['manageCalendar' => $manager && $user->can('calendar.create') && $user->can('calendar.update'), 'manageExams' => $manager && $user->can('exams.create') && $user->can('exams.update')], 'mode' => $user->active_role === 'Mahasiswa' ? 'student' : 'manager',
         ]);
     }
@@ -83,6 +96,50 @@ final class AcademicCalendarController extends Controller
         return back()->with('success', 'Jadwal ujian berhasil dihapus.');
     }
 
+    public function syncInvigilators(ExamInvigilatorRequest $request, ExamSchedule $exam, ExamOperationsService $service, NotificationService $notifications): RedirectResponse
+    {
+        $previousLecturerIds = $exam->invigilators()->pluck('lecturer_id');
+        $exam = $service->syncInvigilators($exam, $request->validated(), $request->user());
+        foreach ($exam->invigilators->whereNotIn('lecturer_id', $previousLecturerIds) as $assignment) {
+            if ($assignment->lecturer?->user_id) $notifications->send($assignment->lecturer->user_id, 'exam_assignment', 'Penugasan pengawas ujian', 'Anda ditugaskan mengawas '.$exam->exam_type.' pada '.$exam->exam_date->format('d M Y').' pukul '.substr($exam->starts_at, 0, 5).'.', '/academic/calendar', ['exam_schedule_id' => $exam->id]);
+        }
+        $this->audit($request, 'invigilators_synced', 'exam_schedule', $exam->id, ['lecturer_ids' => $exam->invigilators->pluck('lecturer_id')->all()]);
+        return back()->with('success', 'Penugasan pengawas berhasil disimpan.');
+    }
+
+    public function prepareRoster(Request $request, ExamSchedule $exam, ExamOperationsService $service): RedirectResponse
+    {
+        Gate::authorize('operate', $exam); $participants = $service->prepareRoster($exam, $request->user()); $this->audit($request, 'participant_roster_prepared', 'exam_schedule', $exam->id, ['participant_count' => $participants->count()]);
+        return back()->with('success', 'Daftar hadir berhasil disiapkan dari peserta yang memenuhi syarat.');
+    }
+
+    public function recordAttendance(ExamAttendanceRequest $request, ExamSchedule $exam, ExamOperationsService $service): RedirectResponse
+    {
+        $participants = $service->recordAttendance($exam, $request->validated('participants'), $request->user()); $this->audit($request, 'attendance_recorded', 'exam_schedule', $exam->id, ['participant_count' => $participants->count()]);
+        return back()->with('success', 'Daftar hadir ujian berhasil diperbarui.');
+    }
+
+    public function saveReport(ExamReportRequest $request, ExamSchedule $exam, ExamOperationsService $service): RedirectResponse
+    {
+        $report = $service->saveReport($exam, $request->validated(), $request->user()); $this->audit($request, $report->status === 'finalized' ? 'exam_report_finalized' : 'exam_report_saved', 'exam_report', $report->id, ['exam_schedule_id' => $exam->id, 'status' => $report->status]);
+        return back()->with('success', $report->status === 'finalized' ? 'Berita acara berhasil difinalisasi.' : 'Draf berita acara berhasil disimpan.');
+    }
+
+    public function attendancePdf(Request $request, ExamSchedule $exam)
+    {
+        Gate::authorize('operate', $exam); $exam->load(['academicTerm:id,code,name', 'classGroup.course:id,code,name', 'room.building:id,name', 'room:id,building_id,name,code', 'invigilators.lecturer:id,name,nidn', 'participants']);
+        abort_if($exam->participants->isEmpty(), 404);
+        return $this->pdf(view('exams.attendance', compact('exam'))->render(), 'daftar-hadir-ujian-'.$exam->id.'.pdf');
+    }
+
+    public function reportPdf(Request $request, ExamSchedule $exam)
+    {
+        Gate::authorize('view', $exam); $exam->load(['academicTerm:id,code,name', 'classGroup.course:id,code,name', 'room.building:id,name', 'room:id,building_id,name,code', 'invigilators.lecturer:id,name,nidn', 'participants', 'report.preparedBy:id,name', 'report.finalizedBy:id,name']);
+        abort_unless($exam->report?->status === 'finalized', 404);
+        $verificationUrl = route('exams.verify', $exam->verification_code); $svg = (new Writer(new ImageRenderer(new RendererStyle(110, 1), new SvgImageBackEnd())))->writeString($verificationUrl);
+        return $this->pdf(view('exams.report', compact('exam', 'verificationUrl') + ['qrCode' => 'data:image/svg+xml;base64,'.base64_encode($svg)])->render(), 'berita-acara-ujian-'.$exam->id.'.pdf');
+    }
+
     public function card(Request $request, ExamSchedule $exam, ExamScheduleService $service)
     {
         Gate::authorize('view', $exam); abort_unless($request->user()->active_role === 'Mahasiswa' && $request->user()->student, 403); $exam->load(['academicTerm:id,code,name', 'classGroup.course:id,code,name,credits', 'classGroup.lecturer:id,name', 'room.building:id,name']); $student = $request->user()->student->load('user:id,name');
@@ -100,5 +157,11 @@ final class AcademicCalendarController extends Controller
     private function audit(Request $request, string $action, string $type, int $id, array $data): void
     {
         DB::table('audit_logs')->insert(['user_id' => $request->user()->id, 'module' => 'academic_calendar', 'action' => $action, 'record_type' => $type, 'record_id' => (string) $id, 'new_data' => json_encode($data), 'ip_address' => $request->ip(), 'created_at' => now(), 'updated_at' => now()]);
+    }
+
+    private function pdf(string $html, string $filename)
+    {
+        $options = new Options(); $options->set('isRemoteEnabled', false); $options->set('isHtml5ParserEnabled', true); $options->set('defaultFont', 'DejaVu Sans'); $dompdf = new Dompdf($options); $dompdf->loadHtml($html); $dompdf->setPaper('A4', 'portrait'); $dompdf->render();
+        return response($dompdf->output(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="'.$filename.'"']);
     }
 }

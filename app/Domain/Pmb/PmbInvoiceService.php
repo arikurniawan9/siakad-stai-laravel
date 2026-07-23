@@ -4,6 +4,7 @@ namespace App\Domain\Pmb;
 
 use App\Models\PmbApplication;
 use App\Models\PmbInvoice;
+use App\Services\FinanceNotificationService;
 use Illuminate\Support\Facades\DB;
 
 final class PmbInvoiceService
@@ -11,6 +12,7 @@ final class PmbInvoiceService
     public function __construct(
         private readonly PmbFeeResolver $resolver,
         private readonly PmbVirtualAccountService $virtualAccounts,
+        private readonly FinanceNotificationService $notifications,
     ) {}
 
     public function issue(PmbApplication $application): PmbInvoice
@@ -20,6 +22,7 @@ final class PmbInvoiceService
             $existing = PmbInvoice::query()->where('pmb_application_id', $application->id)->lockForUpdate()->first();
             if ($existing) {
                 $this->virtualAccounts->issue($application, $existing);
+                $this->notifications->pmbInvoiceIssued($existing);
                 return $existing;
             }
             $fee = $this->resolver->resolve($application);
@@ -36,6 +39,7 @@ final class PmbInvoiceService
             ]);
             $application->forceFill(['pmb_fee_id' => $fee->id])->save();
             $this->virtualAccounts->issue($application, $invoice);
+            $this->notifications->pmbInvoiceIssued($invoice);
 
             return $invoice;
         }, 3);

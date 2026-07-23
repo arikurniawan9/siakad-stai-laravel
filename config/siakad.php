@@ -36,4 +36,19 @@ return [
     'exam' => [
         'attendance_threshold' => (float) env('SIAKAD_EXAM_ATTENDANCE_THRESHOLD', 75),
     ],
+    'projects' => [
+        'minimum_gpa' => (float) env('SIAKAD_PROJECT_MINIMUM_GPA', 2.00),
+        'minimum_credits' => [
+            'thesis' => (int) env('SIAKAD_THESIS_MINIMUM_CREDITS', 120),
+            'internship' => (int) env('SIAKAD_INTERNSHIP_MINIMUM_CREDITS', 80),
+            'community_service' => (int) env('SIAKAD_COMMUNITY_SERVICE_MINIMUM_CREDITS', 90),
+        ],
+    ],
+    'graduation' => [
+        'minimum_gpa' => (float) env('SIAKAD_GRADUATION_MINIMUM_GPA', 2.00),
+        'minimum_credits' => (int) env('SIAKAD_GRADUATION_MINIMUM_CREDITS', 144),
+        'require_completed_project' => filter_var(env('SIAKAD_GRADUATION_REQUIRE_PROJECT', true), FILTER_VALIDATE_BOOL),
+        'document_number_format' => env('SIAKAD_GRADUATE_DOCUMENT_FORMAT', '{TYPE}/{YEAR}/{SEQUENCE}'),
+        'sequence_digits' => (int) env('SIAKAD_GRADUATE_DOCUMENT_SEQUENCE_DIGITS', 5),
+    ],
 ];

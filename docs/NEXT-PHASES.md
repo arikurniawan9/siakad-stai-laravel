@@ -1,7 +1,9 @@
 # Roadmap Fase Lanjutan SIAKAD
 
-Terakhir diperbarui: 22 Juli 2026  
-Status aplikasi terakhir: Phase 15 selesai dan sudah diterapkan ke database lokal.  
+Terakhir diperbarui: 23 Juli 2026
+
+Status aplikasi terakhir: Phase 18 selesai dan seluruh roadmap fase 14–18 sudah diterapkan ke database lokal.
+
 Catatan penting: aktivitas production, deployment, dan integrasi BSI riil belum dikerjakan sampai ada arahan khusus dan kontrak resmi.
 
 ## Urutan pengerjaan yang disepakati
@@ -31,7 +33,7 @@ Status: complete — selesai dan terverifikasi pada 22 Juli 2026.
 
 ### Phase 16 — Kalender akademik dan ujian
 
-Status: planned — prioritas pengerjaan berikutnya.
+Status: complete — selesai dan terverifikasi pada 23 Juli 2026.
 
 - Kalender akademik terpusat dan agenda berdasarkan semester.
 - Penjadwalan UTS/UAS dengan deteksi bentrok ruang, dosen, dan mahasiswa.
@@ -39,11 +41,11 @@ Status: planned — prioritas pengerjaan berikutnya.
 - Kartu peserta ujian dengan QR.
 - Penetapan pengawas, daftar hadir, berita acara, dan dokumen PDF.
 
-Slice selesai: kalender, jadwal UTS/UAS, eligibility KRS-presensi-keuangan, kartu peserta PDF, dan QR verifikasi. Titik lanjut Phase 16 adalah penetapan pengawas, daftar hadir ujian, dan berita acara PDF.
+Slice selesai: kalender, jadwal UTS/UAS, eligibility KRS-presensi-keuangan, kartu peserta PDF, QR verifikasi, penetapan pengawas dengan deteksi bentrok, snapshot roster peserta yang memenuhi syarat, pencatatan kehadiran, notifikasi pengawas, serta berita acara final dan PDF.
 
 ### Phase 17 — Tugas akhir, PKL, dan KKN
 
-Status: planned.
+Status: complete — selesai dan terverifikasi pada 23 Juli 2026.
 
 - Pengajuan judul/proposal dan pemeriksaan kelayakan.
 - Penentuan pembimbing serta penguji.
@@ -54,13 +56,15 @@ Status: planned.
 
 ### Phase 18 — Yudisium, wisuda, dan alumni
 
-Status: planned.
+Status: complete — selesai dan terverifikasi pada 23 Juli 2026.
 
 - Pemeriksaan otomatis syarat kelulusan: SKS, IPK, administrasi, tugas akhir, dan dokumen.
 - Pengajuan dan persetujuan yudisium.
 - Pendaftaran wisuda serta pengelolaan peserta.
 - Nomor ijazah, transkrip final, dan SKPI.
 - Portal alumni dan tracer study.
+
+Slice selesai: periode pendaftaran dan kuota yudisium/wisuda, pengajuan mahasiswa yang idempoten, dokumen persyaratan privat berversi, pemeriksaan otomatis status/SKS/IPK/tunggakan/tugas akhir, approval dengan pemeriksaan ulang, penetapan status Lulus, histori status mahasiswa, penerbitan ijazah/transkrip final/SKPI bernomor urut dengan snapshot/hash/QR/PDF, verifikasi publik, profil alumni, serta tracer study tahunan yang idempoten.
 
 ## Backlog fitur pendukung
 
@@ -73,7 +77,7 @@ Fitur berikut dapat ditempatkan setelah atau di sela Phase 14–18 berdasarkan k
 - PWA agar aplikasi nyaman dipasang dan digunakan seperti aplikasi mobile.
 - Adapter PDDikti Feeder dengan staging, validasi, dan rekonsiliasi data.
 - SSO Google/Microsoft institusi.
-- Adapter notifikasi email dan WhatsApp resmi.
+- Adapter notifikasi email dan WhatsApp resmi. Fondasi email serta Meta WhatsApp Cloud API untuk transaksi keuangan selesai; aktivasi pengiriman nyata memerlukan SMTP, access token, phone number ID, dan approved utility template institusi.
 - Dashboard kesehatan sistem, antrean, scheduler, dan kegagalan integrasi.
 
 ## Definition of Done untuk setiap fase
@@ -93,4 +97,4 @@ Satu fase hanya dianggap selesai jika memiliki:
 
 ## Titik mulai sesi berikutnya
 
-Mulai dari **Phase 16 — Kalender akademik dan ujian**. Sebelum implementasi, audit periode akademik, jadwal kuliah, ruangan, enrollment approved, presensi, tagihan, dan komponen `ModalForm`. Production dan adapter BSI riil tetap berada di luar scope.
+Roadmap Phase 14–18 telah selesai. Sesi berikutnya dapat memilih satu backlog fitur pendukung berdasarkan prioritas kampus, atau beralih ke audit kesiapan production setelah kebijakan institusi, identitas penandatangan, dan kontrak BSI resmi tersedia. Deployment production dan adapter BSI riil tetap berada di luar scope sampai ada arahan khusus.

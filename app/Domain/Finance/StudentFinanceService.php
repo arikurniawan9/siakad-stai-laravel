@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\PaymentVirtualAccount;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\FinanceNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -16,19 +17,34 @@ use LogicException;
 
 final class StudentFinanceService
 {
-    public function __construct(private readonly VirtualAccountGateway $gateway) {}
+    public function __construct(
+        private readonly VirtualAccountGateway $gateway,
+        private readonly FinanceNotificationService $notifications,
+    ) {}
 
     public function createBill(Student $student, AcademicTerm $term, array $data, User $actor): BillingItem
     {
         $reference = 'INV-'.$term->code.'-'.($student->nim ?: $student->id).'-'.strtoupper(Str::random(6));
-        return BillingItem::create([...$data, 'student_id' => $student->id, 'academic_term_id' => $term->id, 'invoice_number' => $reference, 'paid_amount' => 0, 'status' => 'unpaid', 'created_by' => $actor->id]);
+        return DB::transaction(function () use ($student, $term, $data, $actor, $reference): BillingItem {
+            $bill = BillingItem::create([...$data, 'student_id' => $student->id, 'academic_term_id' => $term->id, 'invoice_number' => $reference, 'paid_amount' => 0, 'status' => 'unpaid', 'created_by' => $actor->id]);
+            $this->notifications->billIssued($bill);
+
+            return $bill;
+        }, 3);
     }
 
     public function waive(BillingItem $bill, string $reason, User $actor): BillingItem
     {
         if ($bill->status === 'paid') throw ValidationException::withMessages(['bill' => 'Tagihan yang sudah lunas tidak dapat dibebaskan.']);
-        $bill->update(['status' => 'waived', 'waived_by' => $actor->id, 'waiver_reason' => $reason, 'waived_at' => now()]);
-        return $bill->fresh();
+        return DB::transaction(function () use ($bill, $reason, $actor): BillingItem {
+            $bill = BillingItem::query()->lockForUpdate()->findOrFail($bill->id);
+            if ($bill->status === 'paid') throw ValidationException::withMessages(['bill' => 'Tagihan yang sudah lunas tidak dapat dibebaskan.']);
+            $bill->update(['status' => 'waived', 'waived_by' => $actor->id, 'waiver_reason' => $reason, 'waived_at' => now()]);
+            $bill = $bill->fresh();
+            $this->notifications->billWaived($bill);
+
+            return $bill;
+        }, 3);
     }
 
     public function recordManualPayment(BillingItem $bill, array $data, User $actor): Payment
@@ -43,6 +59,7 @@ final class StudentFinanceService
             $payment->allocations()->create(['billing_item_id' => $bill->id, 'amount' => $amount]);
             $newPaid = round((float) $bill->paid_amount + $amount, 2);
             $bill->update(['paid_amount' => $newPaid, 'status' => $newPaid >= (float) $bill->amount ? 'paid' : 'partial']);
+            $this->notifications->billPaymentUpdated($bill->fresh(), $payment);
             return $payment;
         }, 3);
     }

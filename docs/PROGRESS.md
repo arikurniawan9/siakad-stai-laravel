@@ -77,7 +77,7 @@ php artisan test
 PHP lint: 130 files
 ```
 
-Status: typecheck, build, route list (108 route aplikasi), test (120 passed / 910 assertions), dan lint 153 file PHP domain/test hijau. Migration seleksi/NIM teruji lewat SQLite in-memory; penerapan migration terbaru ke MySQL lokal menunggu service MySQL pada `127.0.0.1:3306` aktif.
+Status: typecheck, build, route list (238 route aplikasi), test (197 passed / 1.652 assertions), dan lint 311 file PHP domain/test hijau. Migration hingga `2026_07_23_250000` serta seeder permission/menu sudah diterapkan ke MySQL lokal.
 
 ## Checkpoint Phase 5 — Manajemen pengguna
 
@@ -216,10 +216,37 @@ Selesai pada slice ini: workspace bimbingan role-aware untuk Mahasiswa, Dosen, P
 Verifikasi: PHPUnit regresi penuh 176 test / 1.554 assertions, test workflow Phase 14 10 test / 134 assertions, `npm run typecheck`, `npm run build` hijau (2.407 modul), 188 route terdaftar, dan migration `2026_07_22_190000`–`2026_07_22_200000` berhasil pada MySQL Laragon.  
 Penutupan: kalender ketersediaan dan panel rencana intervensi tampil di workspace dengan modal input responsif; reminder terjadwal berjalan melalui `guidance:send-reminders` setiap jam; ambang early warning dapat dikonfigurasi; konflik jadwal dan ownership dosen wali tervalidasi; serta pengujian domain khusus telah ditambahkan. Kebijakan intervensi institusi dapat diperluas kemudian tanpa mengubah histori yang sudah tercatat.
 
-## Checkpoint Phase 16 - Kalender akademik dan penjadwalan ujian
+## Checkpoint Phase 16 — Kalender akademik dan operasional ujian
 
-Status: in progress (slice fondasi selesai). Kalender akademik terpusat berbasis periode, agenda publik, jadwal UTS/UAS dengan mode luring/daring/hybrid, deteksi konflik ruangan-dosen-mahasiswa, validasi kelas/periode dan kapasitas, eligibility dari KRS-presensi-keuangan, kartu peserta PDF dengan QR, halaman verifikasi publik, policy, permission, audit, migration, seeder, dan modal UI sudah tersedia. Titik lanjut: penetapan pengawas, daftar hadir ujian, dan berita acara PDF.
+Status: complete (scope non-production Phase 16).
 
-Verifikasi sesi ini: lint PHP statis dengan `php -n -l`, `npm run typecheck`, dan `npm run build` hijau. PHPUnit/Artisan belum dapat dijalankan karena PHP CLI default 8.1.10 sementara dependency proyek mensyaratkan PHP >=8.4.1.
+Selesai: kalender akademik terpusat berbasis periode; agenda publik; jadwal UTS/UAS luring, daring, dan hybrid; deteksi konflik ruangan, dosen pengampu, mahasiswa, serta pengawas; validasi kelas/periode/kapasitas; eligibility dari KRS approved, presensi, dan keuangan; kartu peserta PDF dengan QR dan verifikasi publik; penetapan koordinator/anggota pengawas melalui modal; permission `exams.assign`/`exams.operate`; notifikasi penugasan; roster peserta berupa snapshot eligibility yang idempotent; pencatatan daftar hadir terisolasi untuk pengawas yang ditugaskan; PDF daftar hadir; berita acara draf/final; ringkasan kehadiran otomatis; penguncian jadwal, pengawas, roster, dan berita acara setelah finalisasi; PDF berita acara; Policy, transaksi, row lock, constraint, audit, migration, dan seeder.
 
-Verifikasi tambahan: PHPUnit khusus Phase 15 3 test / 15 assertions; regresi penuh 179 test / 1.569 assertions; `npm run typecheck`, `npm run build` hijau (2.407 modul); migration `2026_07_22_190000`–`2026_07_22_210000`, scheduler, dan seeder berhasil pada MySQL Laragon.
+Verifikasi: PHPUnit khusus Phase 16 8 test / 32 assertions dan regresi penuh 187 test / 1.601 assertions; `npm.cmd run typecheck` dan `npm.cmd run build` hijau (2.408 modul); 218 route terdaftar; lint 283 file PHP hijau; migration `2026_07_23_220000`–`2026_07_23_230000` serta seeder permission/menu berhasil pada MySQL Laragon. Test dijalankan langsung melalui PHPUnit memakai PHP 8.4.2 dengan extension SQLite lokal karena `artisan test` mewarisi binary PHP 8.1 dari PATH Windows.
+Catatan kebijakan: ambang presensi ujian tetap configurable melalui `SIAKAD_EXAM_ATTENDANCE_THRESHOLD`; format dokumen dan identitas penandatangan perlu disesuaikan dengan pejabat resmi kampus sebelum production. Production/deployment dan adapter BSI riil tetap sengaja di luar scope.
+
+## Checkpoint Phase 17 — Tugas akhir, PKL, dan KKN
+
+Status: complete (scope non-production Phase 17).
+
+Selesai: satu lifecycle bersama untuk tugas akhir, PKL, dan KKN; pengajuan draf oleh mahasiswa; pemeriksaan kelayakan berbasis status aktif, SKS lulus, dan IPK dengan snapshot immutable; ambang configurable per jenis kegiatan; proposal serta dokumen pendukung privat dengan version history dan hash SHA-256; review approve/revisi/tolak; penetapan maksimal dua pembimbing dan tiga penguji; penguncian tim setelah jadwal terbit; notifikasi serta isolasi akses dosen hanya pada penugasan; logbook kegiatan dan review pembimbing; catatan bimbingan privat; jadwal seminar proposal/seminar akhir/sidang dengan deteksi bentrok ruangan dan seluruh dosen; rubrik wajib berbobot tepat 100%; input nilai terisolasi per penguji; finalisasi hanya setelah semua komponen seluruh penguji lengkap; nilai akhir otomatis; berita acara immutable, PDF, QR, dan verifikasi publik; laporan akhir privat; repository metadata idempotent yang baru dapat terbit setelah hasil lulus dan berkas final tersedia; unduhan publik mengikuti consent mahasiswa; status kegiatan selesai; Policy, modal responsif, transaksi, row lock, constraint, audit, permission, menu, dan seeder.
+
+Verifikasi: PHPUnit khusus Phase 17 10 test / 51 assertions dan regresi penuh 197 test / 1.652 assertions; `npm.cmd run typecheck` dan `npm.cmd run build` hijau (2.409 modul); 238 route terdaftar; lint 311 file PHP hijau; migration `2026_07_23_240000`–`2026_07_23_250000` serta seeder berhasil pada MySQL Laragon. MySQL menangkap nama identifier awal yang melewati batas 64 karakter; index/foreign key diperpendek dan hanya tabel baru kosong dari percobaan gagal yang dibersihkan sebelum migration ulang berhasil.
+Catatan kebijakan: default minimum IPK adalah 2,00 dan minimum SKS lulus adalah 120 (tugas akhir), 80 (PKL), serta 90 (KKN); seluruhnya wajib dikonfirmasi institusi dan dapat diubah melalui `SIAKAD_PROJECT_MINIMUM_GPA`, `SIAKAD_THESIS_MINIMUM_CREDITS`, `SIAKAD_INTERNSHIP_MINIMUM_CREDITS`, dan `SIAKAD_COMMUNITY_SERVICE_MINIMUM_CREDITS`. Identitas penandatangan serta format berita acara perlu disesuaikan sebelum production.
+
+## Checkpoint Phase 18 — Yudisium, wisuda, dan alumni
+
+Status: complete (scope non-production Phase 18).
+
+Selesai: pengelolaan periode yudisium/wisuda berbasis semester dengan rentang pendaftaran, tanggal penetapan, kuota, dan status aktif; pengajuan mahasiswa idempoten; tiga dokumen persyaratan privat dengan version history serta SHA-256; pemeriksaan otomatis status aktif, SKS lulus, IPK, tunggakan, dan repository tugas akhir dengan snapshot; approval/penolakan dengan pemeriksaan ulang; penetapan Lulus atomik dan histori status mahasiswa; penerbitan idempoten ijazah, transkrip final, serta SKPI menggunakan sequence terkunci per tahun/jenis; snapshot dokumen immutable, content hash, PDF, QR, dan verifikasi publik; pembuatan profil alumni; pemutakhiran kontak/karier; tracer study satu respons per tahun yang di-upsert; policy/ownership, notifikasi, audit, transaksi, row lock, constraint, permission, menu, modal responsif, dan seeder.
+
+Verifikasi: PHPUnit khusus Phase 18 8 test / 62 assertions dan regresi penuh 205 test / 1.714 assertions; `npm.cmd run typecheck` dan `npm.cmd run build` hijau (2.410 modul); 277 route terdaftar; lint 366 file PHP hijau; migration `2026_07_23_260000` serta seeder berhasil pada MySQL Laragon.
+Catatan kebijakan: default minimum kelulusan adalah IPK 2,00, 144 SKS, tanpa tunggakan, dan tugas akhir/repository selesai. Nilai dapat diubah melalui `SIAKAD_GRADUATION_MINIMUM_GPA`, `SIAKAD_GRADUATION_MINIMUM_CREDITS`, serta `SIAKAD_GRADUATION_REQUIRE_PROJECT`; format nomor melalui `SIAKAD_GRADUATE_DOCUMENT_FORMAT` dan `SIAKAD_GRADUATE_DOCUMENT_SEQUENCE_DIGITS`. Nama institusi, identitas pejabat penandatangan, format dokumen, serta integrasi nomor ijazah nasional wajib dikonfirmasi sebelum production. Roadmap Phase 14–18 selesai; deployment production dan adapter BSI riil tetap di luar scope.
+
+## Checkpoint pendukung — Notifikasi email dan WhatsApp keuangan
+
+Status: complete untuk fondasi aplikasi; aktivasi provider nyata menunggu kredensial institusi.
+
+Selesai: transactional outbox idempoten untuk kanal in-app, email, dan WhatsApp; event tagihan mahasiswa serta PMB ketika diterbitkan, dibayar sebagian, lunas, atau dibebaskan; pengingat jatuh tempo H-7/H-3/H-1/H/H+1/H+7; nomor Indonesia dinormalisasi; alamat kosong dilewati tanpa menggagalkan transaksi; retry, batas percobaan, pemulihan record processing yang tertinggal, dan provider message ID; email HTML melalui mailer Laravel; safe local WhatsApp log driver; adapter Meta WhatsApp Cloud API berbasis approved utility template; scheduler harian dan dispatcher setiap menit; command operasional; konfigurasi environment; serta pengujian callback VA, pembayaran manual, PMB, idempotensi, reminder, email, dan payload Meta.
+
+Verifikasi: 8 test baru / 27 assertions; regresi penuh 213 test / 1.741 assertions; 379 file PHP lolos syntax lint; `npm.cmd run typecheck`, production build 2.410 modul, dan validasi `composer.json` hijau; migration `2026_07_23_270000` berhasil pada MySQL Laragon; scheduler menampilkan reminder harian dan dispatcher per menit. Pengiriman lokal sengaja menghasilkan log dan belum menghubungi nomor nyata. Pengiriman nyata memerlukan SMTP serta Meta phone number ID, access token, dan approved template dengan lima parameter yang terdokumentasi.

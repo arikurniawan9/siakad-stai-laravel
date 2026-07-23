@@ -31,4 +31,6 @@ class Student extends Model
     public function virtualAccounts(): HasMany { return $this->hasMany(PaymentVirtualAccount::class); }
     public function officialDocuments(): HasMany { return $this->hasMany(OfficialDocument::class); }
     public function serviceRequests(): HasMany { return $this->hasMany(StudentServiceRequest::class); }
+    public function academicProjects(): HasMany { return $this->hasMany(AcademicProject::class); }
+    public function graduationApplications(): HasMany { return $this->hasMany(GraduationApplication::class); }
 }

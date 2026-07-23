@@ -2,6 +2,9 @@
 
 namespace App\Domain\Finance;
 
+use App\Models\BillingItem;
+use App\Models\PmbInvoice;
+use App\Services\FinanceNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
@@ -10,6 +13,8 @@ use Throwable;
 
 final class BsiPaymentAllocationService
 {
+    public function __construct(private readonly FinanceNotificationService $notifications) {}
+
     /** Process an authenticated bank event atomically. */
     public function process(array $payload): array
     {
@@ -52,6 +57,7 @@ final class BsiPaymentAllocationService
                 DB::table('payment_allocations')->insert(['payment_id' => $paymentId, 'billing_item_id' => $bill->id, 'amount' => self::toMoney($allocation), 'created_at' => now(), 'updated_at' => now()]);
                 $newPaid = self::toCents((string) $bill->paid_amount) + $allocation;
                 DB::table('billing_items')->where('id', $bill->id)->update(['paid_amount' => self::toMoney($newPaid), 'status' => $newPaid >= self::toCents((string) $bill->amount) ? 'paid' : 'partial', 'updated_at' => now()]);
+                $this->notifications->billPaymentUpdated(BillingItem::query()->findOrFail($bill->id), $paymentId, self::toMoney($allocation));
                 $remaining -= $allocation;
                 $allocated += $allocation;
             }
@@ -131,6 +137,7 @@ final class BsiPaymentAllocationService
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        $this->notifications->pmbPaymentUpdated(PmbInvoice::query()->findOrFail($invoice->id), $paymentId, self::toMoney($amount));
 
         return [
             'duplicate' => false,

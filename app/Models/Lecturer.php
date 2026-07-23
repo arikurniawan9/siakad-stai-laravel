@@ -48,4 +48,14 @@ class Lecturer extends Model
     {
         return $this->hasMany(Student::class, 'academic_advisor_id');
     }
+
+    public function examInvigilatorAssignments(): HasMany
+    {
+        return $this->hasMany(ExamInvigilator::class);
+    }
+
+    public function academicProjectAssignments(): HasMany
+    {
+        return $this->hasMany(AcademicProjectLecturer::class);
+    }
 }

@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('guidance:send-reminders')->hourly()->withoutOverlapping();
+        $schedule->command('finance:queue-reminders')->dailyAt('08:00')->withoutOverlapping();
+        $schedule->command('finance:dispatch-notifications')->everyMinute()->withoutOverlapping();
     })
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {

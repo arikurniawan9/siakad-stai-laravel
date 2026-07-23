@@ -27,7 +27,8 @@ final class ExamScheduleService
     public function update(ExamSchedule $exam, array $data, User $actor): ExamSchedule
     {
         return DB::transaction(function () use ($exam, $data, $actor): ExamSchedule {
-            $exam = ExamSchedule::query()->lockForUpdate()->findOrFail($exam->id);
+            $exam = ExamSchedule::query()->with('report')->lockForUpdate()->findOrFail($exam->id);
+            if ($exam->report?->status === 'finalized') throw ValidationException::withMessages(['exam' => 'Jadwal ujian terkunci setelah berita acara difinalisasi.']);
             $this->assertValidClassTerm($data);
             $this->assertNoConflict($data, $exam->id);
             $exam->update([...$data, 'updated_by' => $actor->id]);

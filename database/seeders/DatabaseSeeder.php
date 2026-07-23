@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $roles = ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Calon Mahasiswa', 'Staff', 'Keuangan', 'Pimpinan', 'Bendahara'];
-        $modules = ['users', 'roles', 'permissions', 'menus', 'settings', 'campuses', 'faculties', 'programs', 'academic_terms', 'courses', 'curricula', 'buildings', 'rooms', 'lecturers', 'schedules', 'students', 'calendar', 'exams', 'pmb', 'pmb_fees', 'pmb_verification', 'pmb_payments', 'pmb_selection', 'registration', 'krs', 'grades', 'transcript', 'attendance', 'documents', 'service_requests', 'service_types', 'guidance', 'lms', 'edom', 'finance', 'billing', 'payments', 'bank_integrations', 'virtual_accounts', 'reconciliation', 'reports'];
+        $modules = ['users', 'roles', 'permissions', 'menus', 'settings', 'campuses', 'faculties', 'programs', 'academic_terms', 'courses', 'curricula', 'buildings', 'rooms', 'lecturers', 'schedules', 'students', 'calendar', 'exams', 'projects', 'graduation', 'alumni', 'pmb', 'pmb_fees', 'pmb_verification', 'pmb_payments', 'pmb_selection', 'registration', 'krs', 'grades', 'transcript', 'attendance', 'documents', 'service_requests', 'service_types', 'guidance', 'lms', 'edom', 'finance', 'billing', 'payments', 'bank_integrations', 'virtual_accounts', 'reconciliation', 'reports'];
 
         foreach ($roles as $role) {
             Role::findOrCreate($role, 'web');
@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
         }
         Permission::findOrCreate('students.export', 'web');
         Permission::findOrCreate('users.export', 'web');
+        Permission::findOrCreate('exams.assign', 'web');
+        Permission::findOrCreate('exams.operate', 'web');
 
         Role::findByName('Admin', 'web')->syncPermissions(Permission::all());
 
@@ -62,11 +64,20 @@ class DatabaseSeeder extends Seeder
         $rolePermissions['Prodi'] = array_values(array_unique([...$rolePermissions['Prodi'], 'guidance.view', 'guidance.create', 'guidance.update']));
         $rolePermissions['Staff'] = array_values(array_unique([...$rolePermissions['Staff'], 'guidance.view', 'guidance.create', 'guidance.update']));
         $rolePermissions['Pimpinan'] = array_values(array_unique([...$rolePermissions['Pimpinan'], 'guidance.view']));
-        $rolePermissions['Prodi'] = array_values(array_unique([...$rolePermissions['Prodi'], 'calendar.view', 'calendar.create', 'calendar.update', 'calendar.delete', 'exams.view', 'exams.create', 'exams.update', 'exams.delete']));
-        $rolePermissions['Staff'] = array_values(array_unique([...$rolePermissions['Staff'], 'calendar.view', 'calendar.create', 'calendar.update', 'calendar.delete', 'exams.view', 'exams.create', 'exams.update', 'exams.delete']));
-        $rolePermissions['Dosen'] = array_values(array_unique([...$rolePermissions['Dosen'], 'calendar.view', 'exams.view']));
+        $rolePermissions['Prodi'] = array_values(array_unique([...$rolePermissions['Prodi'], 'calendar.view', 'calendar.create', 'calendar.update', 'calendar.delete', 'exams.view', 'exams.create', 'exams.update', 'exams.delete', 'exams.assign', 'exams.operate']));
+        $rolePermissions['Staff'] = array_values(array_unique([...$rolePermissions['Staff'], 'calendar.view', 'calendar.create', 'calendar.update', 'calendar.delete', 'exams.view', 'exams.create', 'exams.update', 'exams.delete', 'exams.assign', 'exams.operate']));
+        $rolePermissions['Dosen'] = array_values(array_unique([...$rolePermissions['Dosen'], 'calendar.view', 'exams.view', 'exams.operate']));
         $rolePermissions['Mahasiswa'] = array_values(array_unique([...$rolePermissions['Mahasiswa'], 'calendar.view', 'exams.view']));
         $rolePermissions['Pimpinan'] = array_values(array_unique([...$rolePermissions['Pimpinan'], 'calendar.view', 'exams.view']));
+        $rolePermissions['Prodi'] = array_values(array_unique([...$rolePermissions['Prodi'], 'projects.view', 'projects.create', 'projects.update', 'projects.delete']));
+        $rolePermissions['Staff'] = array_values(array_unique([...$rolePermissions['Staff'], 'projects.view', 'projects.update']));
+        $rolePermissions['Dosen'] = array_values(array_unique([...$rolePermissions['Dosen'], 'projects.view', 'projects.update']));
+        $rolePermissions['Mahasiswa'] = array_values(array_unique([...$rolePermissions['Mahasiswa'], 'projects.view', 'projects.create', 'projects.update']));
+        $rolePermissions['Pimpinan'] = array_values(array_unique([...$rolePermissions['Pimpinan'], 'projects.view']));
+        $rolePermissions['Prodi'] = array_values(array_unique([...$rolePermissions['Prodi'], 'graduation.view', 'graduation.create', 'graduation.update', 'alumni.view']));
+        $rolePermissions['Staff'] = array_values(array_unique([...$rolePermissions['Staff'], 'graduation.view', 'graduation.create', 'graduation.update', 'alumni.view']));
+        $rolePermissions['Mahasiswa'] = array_values(array_unique([...$rolePermissions['Mahasiswa'], 'graduation.view', 'graduation.create', 'graduation.update', 'alumni.view', 'alumni.update']));
+        $rolePermissions['Pimpinan'] = array_values(array_unique([...$rolePermissions['Pimpinan'], 'graduation.view', 'alumni.view']));
         foreach ($rolePermissions as $role => $permissions) {
             Role::findByName($role, 'web')->syncPermissions(Permission::query()->whereIn('name', $permissions)->get());
         }
@@ -92,12 +103,14 @@ class DatabaseSeeder extends Seeder
             ['key' => 'dashboard', 'label' => 'Overview', 'href' => '/dashboard', 'icon' => 'LayoutDashboard', 'permission' => null, 'roles' => $allRoles],
             ['key' => 'layanan', 'label' => 'Layanan mahasiswa', 'href' => '/services', 'icon' => 'ConciergeBell', 'permission' => 'service_requests.view', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Keuangan', 'Bendahara']],
             ['key' => 'bimbingan', 'label' => 'Bimbingan & early warning', 'href' => '/academic/guidance', 'icon' => 'HeartPulse', 'permission' => 'guidance.view', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Pimpinan']],
-            ['key' => 'akademik', 'label' => 'Akademik', 'href' => null, 'icon' => 'GraduationCap', 'permission' => null, 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Keuangan', 'Bendahara']],
+            ['key' => 'akademik', 'label' => 'Akademik', 'href' => null, 'icon' => 'GraduationCap', 'permission' => null, 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Keuangan', 'Bendahara', 'Pimpinan']],
             ['key' => 'akademik.master-data', 'label' => 'Master data', 'href' => '/admin/master-data', 'icon' => 'Database', 'permission' => 'courses.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Staff']],
             ['key' => 'akademik.sarana', 'label' => 'Gedung & ruangan', 'href' => '/admin/facilities', 'icon' => 'Building2', 'permission' => 'buildings.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Staff']],
             ['key' => 'akademik.kurikulum', 'label' => 'Kurikulum', 'href' => '/admin/curricula', 'icon' => 'BookOpenCheck', 'permission' => 'curricula.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Staff']],
             ['key' => 'akademik.jadwal', 'label' => 'Dosen & jadwal', 'href' => '/admin/academic-schedules', 'icon' => 'CalendarClock', 'permission' => 'schedules.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff']],
             ['key' => 'akademik.kalender', 'label' => 'Kalender & ujian', 'href' => '/academic/calendar', 'icon' => 'CalendarDays', 'permission' => 'calendar.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Pimpinan']],
+            ['key' => 'akademik.proyek', 'label' => 'TA, PKL & KKN', 'href' => '/academic/projects', 'icon' => 'GraduationCap', 'permission' => 'projects.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Pimpinan']],
+            ['key' => 'akademik.kelulusan', 'label' => 'Yudisium & alumni', 'href' => '/graduation', 'icon' => 'Award', 'permission' => 'graduation.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Mahasiswa', 'Staff', 'Pimpinan']],
             ['key' => 'akademik.mahasiswa', 'label' => 'Mahasiswa', 'href' => '/admin/students', 'icon' => 'Users', 'permission' => 'students.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Staff']],
             ['key' => 'akademik.krs', 'label' => 'Registrasi & KRS', 'href' => '/academic/registration', 'icon' => 'ClipboardList', 'permission' => 'registration.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa', 'Staff', 'Keuangan']],
             ['key' => 'akademik.nilai', 'label' => 'Nilai & transkrip', 'href' => '/academic/grades', 'icon' => 'ChartNoAxesCombined', 'permission' => 'grades.view', 'parent' => 'akademik', 'roles' => ['Admin', 'Prodi', 'Dosen', 'Mahasiswa']],

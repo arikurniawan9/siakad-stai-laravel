@@ -32,6 +32,7 @@ Modul Nilai, KHS, dan Transkrip tersedia pada `/academic/grades`. Ambang huruf m
 Aturan batas SKS dari IPS sebelumnya dapat disesuaikan melalui keluarga environment `SIAKAD_CREDIT_GPA_*`. Nilai resolver disimpan sebagai snapshot pada registrasi agar histori tidak berubah saat konfigurasi diperbarui.
 Ambang early warning dapat disesuaikan melalui `SIAKAD_GUIDANCE_LOW_GPA_THRESHOLD`, `SIAKAD_GUIDANCE_LOW_ATTENDANCE_THRESHOLD`, dan `SIAKAD_GUIDANCE_REMINDER_HOURS_BEFORE`. Scheduler Laravel menjalankan `guidance:send-reminders` setiap jam; pada development dapat diuji manual dengan `php artisan guidance:send-reminders`.
 Ambang presensi minimum untuk kartu peserta ujian dapat disesuaikan melalui `SIAKAD_EXAM_ATTENDANCE_THRESHOLD` (default 75 persen).
+Syarat kelulusan dapat disesuaikan melalui `SIAKAD_GRADUATION_MINIMUM_GPA`, `SIAKAD_GRADUATION_MINIMUM_CREDITS`, dan `SIAKAD_GRADUATION_REQUIRE_PROJECT`. Format nomor ijazah/transkrip final/SKPI memakai `SIAKAD_GRADUATE_DOCUMENT_FORMAT` serta `SIAKAD_GRADUATE_DOCUMENT_SEQUENCE_DIGITS`.
 
 Modul lanjutan tersedia pada:
 
@@ -41,13 +42,29 @@ Modul lanjutan tersedia pada:
 - `/documents` untuk penerbitan KRS/KHS/transkrip/tagihan/kwitansi, unduhan PDF, registri versi, pencabutan, QR, dan verifikasi publik;
 - `/services` untuk pengajuan layanan mahasiswa, persetujuan berjenjang, SLA, lampiran privat, surat PDF, QR verifikasi, dan pencabutan dokumen;
 - `/academic/guidance` untuk jadwal bimbingan dosen wali, catatan privat, tindak lanjut, dan early warning mahasiswa;
-- `/academic/calendar` untuk kalender akademik, jadwal UTS/UAS, pemeriksaan kelayakan, dan kartu peserta ujian;
+- `/academic/calendar` untuk kalender akademik, jadwal UTS/UAS, pemeriksaan kelayakan, kartu peserta, penugasan pengawas, daftar hadir, dan berita acara ujian;
+- `/academic/projects` untuk tugas akhir, PKL, KKN, proposal, pembimbing/penguji, logbook, sidang, berita acara, dan repository;
+- `/graduation` untuk periode yudisium/wisuda, pemeriksaan kelulusan, penerbitan ijazah/transkrip final/SKPI, profil alumni, dan tracer study;
 - `/finance` untuk ledger, VA, pembayaran, pembebasan tagihan, dan rekonsiliasi callback;
 - `/reports` untuk ringkasan eksekutif lintas akademik, keuangan, PMB, dan EDOM;
 - `/admin/audit-logs` untuk audit trail serta ekspor CSV yang menyamarkan secret;
 - `/notifications` untuk kotak masuk notifikasi per pengguna.
 
 Pemulihan password tersedia melalui `/forgot-password`. Konfigurasikan `MAIL_*` ke layanan email institusi pada production; driver log hanya sesuai untuk development.
+
+## Notifikasi keuangan otomatis
+
+Penerbitan tagihan mahasiswa/PMB, pembayaran sebagian, pelunasan, pembebasan tagihan, serta pengingat jatuh tempo otomatis menghasilkan notifikasi dalam aplikasi, email, dan WhatsApp. Pengingat default dikirim pada H-7, H-3, H-1, hari H, H+1, dan H+7; jadwal dapat diubah melalui `FINANCE_NOTIFICATION_REMINDER_DAYS`.
+
+Pada development, `WHATSAPP_DRIVER=log` menulis simulasi pesan ke log tanpa menghubungi penerima nyata. Untuk Meta WhatsApp Cloud API, gunakan `WHATSAPP_DRIVER=meta`, isi `WHATSAPP_META_PHONE_NUMBER_ID` dan `WHATSAPP_META_ACCESS_TOKEN`, lalu sediakan approved utility template bernama sesuai `WHATSAPP_META_FINANCE_TEMPLATE`. Template default `siakad_finance_notification` menerima lima body parameter berurutan: nama penerima, judul, isi pesan, nomor referensi, dan tautan portal. Jangan menyimpan access token di repository.
+
+Antrean tersimpan secara idempoten pada `outbound_notifications`; kegagalan provider tidak menduplikasi pesan dan dicoba ulang sesuai batas konfigurasi. `composer run dev` kini menjalankan scheduler. Pada server, pastikan scheduler Laravel dijalankan setiap menit. Perintah operasionalnya:
+
+```text
+php artisan finance:queue-reminders
+php artisan finance:dispatch-notifications
+php artisan schedule:list
+```
 
 Tidak ada akun demo yang dibuat oleh seeder. Buat akun administrator secara sadar setelah migrasi:
 

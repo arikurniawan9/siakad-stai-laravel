@@ -10,7 +10,6 @@ use App\Models\BillingItem;
 use App\Models\Payment;
 use App\Models\PaymentVirtualAccount;
 use App\Models\Student;
-use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,7 +54,6 @@ final class FinanceController extends Controller
     {
         $this->authorizeManager($request); $student = Student::findOrFail($request->validated('student_id')); $term = AcademicTerm::findOrFail($request->validated('academic_term_id'));
         $bill = $service->createBill($student, $term, $request->safe()->except(['student_id', 'academic_term_id']), $request->user());
-        app(NotificationService::class)->student($student, 'finance', 'Tagihan baru diterbitkan', $bill->description.' sebesar Rp '.number_format((float) $bill->amount, 0, ',', '.').' jatuh tempo '.$bill->due_on->format('d M Y').'.', '/finance', ['billing_item_id' => $bill->id]);
         $this->audit($request, 'bill_created', 'billing_item', $bill->id, ['invoice_number' => $bill->invoice_number, 'amount' => $bill->amount]);
         return back()->with('success', 'Tagihan mahasiswa berhasil diterbitkan.');
     }
@@ -63,14 +61,12 @@ final class FinanceController extends Controller
     public function waive(Request $request, BillingItem $bill, StudentFinanceService $service): RedirectResponse
     {
         $this->authorizeManager($request); $data = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:5000']]); $service->waive($bill, $data['reason'], $request->user());
-        app(NotificationService::class)->student($bill->student, 'finance', 'Tagihan dibebaskan', $bill->description.' telah dibebaskan berdasarkan persetujuan unit keuangan.', '/finance');
         $this->audit($request, 'bill_waived', 'billing_item', $bill->id, ['reason' => $data['reason']]); return back()->with('success', 'Tagihan berhasil dibebaskan dengan jejak persetujuan.');
     }
 
     public function recordPayment(ManualPaymentRequest $request, BillingItem $bill, StudentFinanceService $service): RedirectResponse
     {
         $this->authorizeManager($request); $payment = $service->recordManualPayment($bill, $request->validated(), $request->user());
-        app(NotificationService::class)->student($bill->student, 'finance', 'Pembayaran diterima', 'Pembayaran sebesar Rp '.number_format((float) $payment->amount, 0, ',', '.').' telah dialokasikan ke '.$bill->description.'.', '/finance');
         $this->audit($request, 'manual_payment_recorded', 'payment', $payment->id, ['billing_item_id' => $bill->id, 'amount' => $payment->amount]); return back()->with('success', 'Pembayaran manual berhasil dicatat dan dialokasikan.');
     }
 
@@ -79,7 +75,7 @@ final class FinanceController extends Controller
         abort_unless($request->user()->can('finance.view'), 403);
         abort_unless($request->user()->active_role === 'Mahasiswa' ? (int) $request->user()->student?->id === (int) $student->id : in_array($request->user()->active_role, ['Admin', 'Keuangan', 'Bendahara'], true), 403);
         $va = $service->issueVirtualAccount($student); $this->audit($request, 'student_va_issued', 'student', $student->id, ['va_id' => $va->id, 'provider' => $va->provider]);
-        app(NotificationService::class)->student($student, 'finance', 'Virtual Account aktif', 'Virtual Account '.$va->provider.' Anda sudah siap digunakan untuk pembayaran tagihan.', '/finance');
+        app(\App\Services\NotificationService::class)->student($student, 'finance', 'Virtual Account aktif', 'Virtual Account '.$va->provider.' Anda sudah siap digunakan untuk pembayaran tagihan.', '/finance');
         return back()->with('success', 'Virtual Account mahasiswa siap digunakan.');
     }
 

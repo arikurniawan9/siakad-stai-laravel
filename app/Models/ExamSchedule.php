@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class ExamSchedule extends Model
 {
@@ -19,4 +21,7 @@ final class ExamSchedule extends Model
     public function room(): BelongsTo { return $this->belongsTo(Room::class)->withTrashed(); }
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by')->withTrashed(); }
     public function updater(): BelongsTo { return $this->belongsTo(User::class, 'updated_by')->withTrashed(); }
+    public function invigilators(): HasMany { return $this->hasMany(ExamInvigilator::class); }
+    public function participants(): HasMany { return $this->hasMany(ExamParticipant::class); }
+    public function report(): HasOne { return $this->hasOne(ExamReport::class); }
 }

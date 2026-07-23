@@ -3,7 +3,7 @@ import {
   ArrowLeftRight, BadgeCheck, Bell, BookOpenCheck, CalendarDays, ChartNoAxesCombined, ChevronDown, ChevronLeft,
   ChevronRight, ClipboardList, Database, FileBarChart, GraduationCap, LayoutDashboard, LogOut,
   Menu as MenuIcon, PanelsTopLeft, ReceiptText, Search, Settings2, Sparkles, UserPlus, Users,
-  WalletCards, X, Presentation, Star, ShieldCheck, ClipboardCheck, FileCheck2, ConciergeBell, HeartPulse,
+  WalletCards, X, Presentation, Star, ShieldCheck, ClipboardCheck, FileCheck2, ConciergeBell, HeartPulse, Award,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type ComponentType, type PropsWithChildren } from 'react';
 import type { LucideProps } from 'lucide-react';
@@ -12,7 +12,7 @@ import type { MenuItem, SharedProps } from '@/types';
 const icons: Record<string, ComponentType<LucideProps>> = {
   ArrowLeftRight, BadgeCheck, BookOpenCheck, ChartNoAxesCombined, ClipboardList, Database,
   FileBarChart, GraduationCap, LayoutDashboard, PanelsTopLeft, ReceiptText, Settings2,
-  UserPlus, Users, WalletCards, Presentation, Star, ShieldCheck, ClipboardCheck, FileCheck2, ConciergeBell, HeartPulse, CalendarDays,
+  UserPlus, Users, WalletCards, Presentation, Star, ShieldCheck, ClipboardCheck, FileCheck2, ConciergeBell, HeartPulse, CalendarDays, Award,
 };
 
 const iconThemes: Record<string, { icon: string; glow: string; active: string }> = {

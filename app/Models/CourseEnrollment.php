@@ -20,4 +20,5 @@ final class CourseEnrollment extends Model
     public function gradeScores(): HasMany { return $this->hasMany(StudentGradeScore::class); }
     public function lmsSubmissions(): HasMany { return $this->hasMany(LmsSubmission::class); }
     public function attendanceRecords(): HasMany { return $this->hasMany(AttendanceRecord::class); }
+    public function examParticipants(): HasMany { return $this->hasMany(ExamParticipant::class); }
 }
