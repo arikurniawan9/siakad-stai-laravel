@@ -7,6 +7,7 @@ use App\Integrations\Bsi\FakeBsiVirtualAccountGateway;
 use App\Integrations\WhatsApp\Contracts\WhatsAppGateway;
 use App\Integrations\WhatsApp\LogWhatsAppGateway;
 use App\Integrations\WhatsApp\MetaWhatsAppGateway;
+use App\Support\BsiSettingsStore;
 use Illuminate\Support\ServiceProvider;
 use LogicException;
 
@@ -35,8 +36,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(BsiSettingsStore $settings): void
     {
-        //
+        $settings->apply();
     }
 }

@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\UseFileSessionForSuperAdmin;
+use App\Http\Middleware\VerifyBsiCallbackSignature;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Console\Scheduling\Schedule;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,12 +24,18 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [
-            App\Http\Middleware\HandleInertiaRequests::class,
-            App\Http\Middleware\SecurityHeaders::class,
-        ]);
+        $middleware->web(
+            prepend: [
+                UseFileSessionForSuperAdmin::class,
+            ],
+            append: [
+                HandleInertiaRequests::class,
+                SecurityHeaders::class,
+            ],
+        );
         $middleware->alias([
-            'bsi.signature' => App\Http\Middleware\VerifyBsiCallbackSignature::class,
+            'bsi.signature' => VerifyBsiCallbackSignature::class,
+            'superadmin' => EnsureSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

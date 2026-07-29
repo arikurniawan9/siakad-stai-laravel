@@ -1,6 +1,6 @@
 # Roadmap Fase Lanjutan SIAKAD
 
-Terakhir diperbarui: 23 Juli 2026
+Terakhir diperbarui: 30 Juli 2026
 
 Status aplikasi terakhir: Phase 18 selesai dan seluruh roadmap fase 14–18 sudah diterapkan ke database lokal.
 
@@ -78,7 +78,8 @@ Fitur berikut dapat ditempatkan setelah atau di sela Phase 14–18 berdasarkan k
 - Adapter PDDikti Feeder dengan staging, validasi, dan rekonsiliasi data.
 - SSO Google/Microsoft institusi.
 - Adapter notifikasi email dan WhatsApp resmi. Fondasi email serta Meta WhatsApp Cloud API untuk transaksi keuangan selesai; aktivasi pengiriman nyata memerlukan SMTP, access token, phone number ID, dan approved utility template institusi.
-- Dashboard kesehatan sistem, antrean, scheduler, dan kegagalan integrasi.
+- Portal Super Admin, konfigurasi VA terenkripsi, serta backup/restore/hapus database selesai untuk operasi lokal/non-production.
+- Dashboard kesehatan sistem masih perlu dilanjutkan untuk pemantauan antrean, scheduler, kegagalan integrasi, retensi backup off-host, dan restore drill terjadwal.
 
 ## Definition of Done untuk setiap fase
 
@@ -97,4 +98,4 @@ Satu fase hanya dianggap selesai jika memiliki:
 
 ## Titik mulai sesi berikutnya
 
-Roadmap Phase 14–18 telah selesai. Sesi berikutnya dapat memilih satu backlog fitur pendukung berdasarkan prioritas kampus, atau beralih ke audit kesiapan production setelah kebijakan institusi, identitas penandatangan, dan kontrak BSI resmi tersedia. Deployment production dan adapter BSI riil tetap berada di luar scope sampai ada arahan khusus.
+Roadmap Phase 14–18 telah selesai. Portal Super Admin dan operasi database lokal juga sudah tersedia. Sesi berikutnya dapat melanjutkan dashboard kesehatan sistem, kebijakan retensi backup off-host, restore drill terjadwal, atau backlog fitur pendukung lain berdasarkan prioritas kampus. Audit kesiapan production baru dilanjutkan setelah kebijakan institusi, identitas penandatangan, dan kontrak BSI resmi tersedia. Deployment production dan adapter BSI riil tetap berada di luar scope sampai ada arahan khusus.

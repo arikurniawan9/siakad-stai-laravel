@@ -29,6 +29,10 @@
 @layer components {
     .input { width: 100%; border: 1px solid rgb(226 232 240); border-radius: .75rem; background: rgb(248 250 252); padding: .75rem 1rem; font-size: .875rem; outline: none; transition: all 180ms; }
     .input:focus { border-color: rgb(45 212 191); background: white; box-shadow: 0 0 0 4px rgb(45 212 191 / .1); }
+    .control { width: 100%; min-height: 2.75rem; border: 1px solid rgb(203 213 225); border-radius: .375rem; background: white; padding: .65rem .8rem; font-size: .75rem; color: rgb(30 41 59); outline: none; transition: border-color 180ms, box-shadow 180ms; }
+    .control:focus { border-color: rgb(8 145 178); box-shadow: 0 0 0 3px rgb(8 145 178 / .1); }
+    .super-input { width: 100%; min-height: 3rem; border: 1px solid rgb(255 255 255 / .16); border-radius: .375rem; background: rgb(255 255 255 / .05); padding: .7rem .85rem; font-size: .875rem; color: white; outline: none; transition: border-color 180ms, background-color 180ms, box-shadow 180ms; }
+    .super-input:focus { border-color: rgb(103 232 249 / .8); background: rgb(255 255 255 / .08); box-shadow: 0 0 0 3px rgb(103 232 249 / .08); }
     .action-primary { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; border-radius: .75rem; background: rgb(15 23 42); padding: .65rem 1rem; font-size: .75rem; font-weight: 700; color: white; box-shadow: 0 8px 20px rgb(15 23 42 / .1); }
     .action-primary:hover { transform: translateY(-1px); background: rgb(30 41 59); }
     .action-secondary { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; border-radius: .75rem; background: white; padding: .55rem .8rem; font-size: .7rem; font-weight: 700; color: rgb(51 65 85); box-shadow: inset 0 0 0 1px rgb(226 232 240); }

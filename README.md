@@ -27,6 +27,14 @@ Pada Windows Laragon, gunakan PHP 8.4 melalui menu Laragon atau jalankan Artisan
 
 Suite test memakai SQLite in-memory, sehingga extension `pdo_sqlite` dan `sqlite3` harus aktif pada PHP CLI 8.4. Format NIM hasil konversi PMB dapat diatur melalui `SIAKAD_NIM_FORMAT` (placeholder `{PROGRAM}`, `{YEAR}`, `{SEQUENCE}`) dan `SIAKAD_NIM_SEQUENCE_DIGITS`; default-nya `{PROGRAM}{YEAR}{SEQUENCE}` dengan empat digit sequence.
 
+## Super Admin
+
+Portal pemilik sistem tersedia di `/superadmin`. Jika belum ada akun dengan role `Super Admin`, rute tersebut membuka setup satu kali untuk membuat kredensial pertama. Setelah setup selesai, akses berikutnya menggunakan `/superadmin/login`.
+
+Portal menyediakan konfigurasi VA BSI terenkripsi, backup MySQL/SQLite, download backup privat, restore dengan backup otomatis, dan penghapusan database dengan konfirmasi nama database serta kata sandi. Backup tersimpan di `storage/app/private/backups/database`. Pada Windows, isi `SUPERADMIN_MYSQL_BIN_PATH` jika `mysql.exe` dan `mysqldump.exe` tidak tersedia pada `PATH`; nilainya adalah direktori `bin` MySQL, bukan path file executable. Penghapusan database production dinonaktifkan ketika `APP_DEBUG=false`.
+
+Konfigurasi BSI production dapat disiapkan di portal, tetapi tidak dapat diaktifkan sebelum adapter resmi berdasarkan kontrak onboarding BSI tersedia. Driver `bsi-fake` tetap khusus simulasi non-production.
+
 Modul Registrasi & KRS tersedia pada `/academic/registration`. Jalankan migration dan seeder terbaru agar tabel registrasi, permission role, serta menu sidebar tersedia.
 Modul Nilai, KHS, dan Transkrip tersedia pada `/academic/grades`. Ambang huruf mutu default dapat disesuaikan melalui `SIAKAD_GRADE_A_MIN`, `SIAKAD_GRADE_B_PLUS_MIN`, `SIAKAD_GRADE_B_MIN`, `SIAKAD_GRADE_C_PLUS_MIN`, `SIAKAD_GRADE_C_MIN`, dan `SIAKAD_GRADE_D_MIN` sebelum deployment production.
 Aturan batas SKS dari IPS sebelumnya dapat disesuaikan melalui keluarga environment `SIAKAD_CREDIT_GPA_*`. Nilai resolver disimpan sebagai snapshot pada registrasi agar histori tidak berubah saat konfigurasi diperbarui.
