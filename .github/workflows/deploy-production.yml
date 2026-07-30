@@ -1,0 +1,128 @@
+name: Test and deploy production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: ctype, dom, fileinfo, mbstring, pdo_sqlite, sqlite3
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Type-check frontend
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run application tests
+        run: php artisan test
+
+  deploy:
+    name: Deploy to VPS
+    needs: quality
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_APP_PATH: ${{ secrets.VPS_APP_PATH }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+
+    steps:
+      - name: Validate deployment secrets
+        shell: bash
+        run: |
+          required=(VPS_HOST VPS_PORT VPS_USER VPS_APP_PATH VPS_SSH_KEY VPS_KNOWN_HOSTS)
+
+          for variable in "${required[@]}"; do
+            if [[ -z "${!variable:-}" ]]; then
+              echo "::error::$variable is not configured"
+              exit 1
+            fi
+          done
+
+      - name: Configure SSH
+        shell: bash
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > "$HOME/.ssh/vps_deploy"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" | tr -d '\r' > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/vps_deploy" "$HOME/.ssh/known_hosts"
+
+      - name: Deploy exact commit
+        shell: bash
+        run: |
+          ssh \
+            -p "$VPS_PORT" \
+            -i "$HOME/.ssh/vps_deploy" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            bash -s -- "$VPS_APP_PATH" "$GITHUB_SHA" <<'REMOTE'
+          set -Eeuo pipefail
+
+          app_dir="$1"
+          target_commit="$2"
+          temporary_script=""
+
+          cleanup() {
+            if [[ -n "$temporary_script" && -f "$temporary_script" ]]; then
+              rm -f -- "$temporary_script"
+            fi
+          }
+
+          trap cleanup EXIT
+
+          cd "$app_dir"
+          git fetch --prune origin master
+
+          temporary_script="$(mktemp "${TMPDIR:-/tmp}/siakad-bootstrap-deploy.XXXXXX")"
+          git show "${target_commit}:scripts/deploy-vps.sh" > "$temporary_script"
+          chmod 700 "$temporary_script"
+
+          SIAKAD_DEPLOY_REEXEC=1 \
+          SIAKAD_DEPLOY_APP_DIR="$app_dir" \
+          SIAKAD_DEPLOY_TEMP_SCRIPT="$temporary_script" \
+              "$temporary_script" "$target_commit"
+          REMOTE

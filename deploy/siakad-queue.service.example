@@ -1,0 +1,17 @@
+[Unit]
+Description=SIAKAD Laravel queue worker
+After=network.target mysql.service redis-server.service
+
+[Service]
+Type=simple
+User=siakad
+Group=www-data
+WorkingDirectory=/var/www/siakad
+ExecStart=/usr/bin/php artisan queue:work redis --sleep=3 --tries=5 --timeout=120 --max-time=3600
+Restart=always
+RestartSec=5
+TimeoutStopSec=130
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

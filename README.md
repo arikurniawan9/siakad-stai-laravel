@@ -91,6 +91,13 @@ php artisan test
 php artisan route:list
 ```
 
+## Deployment production
+
+Deployment otomatis dari GitHub ke VPS disiapkan melalui GitHub Actions.
+Panduan setup server, SSH key, GitHub Secrets, Nginx, queue worker, scheduler,
+dan prosedur rollback tersedia di
+[`docs/DEPLOYMENT-VPS.md`](docs/DEPLOYMENT-VPS.md).
+
 ## Konfigurasi sensitif
 
 Turnstile dan BSI sengaja nonaktif pada development. Isi `TURNSTILE_*` dan `BSI_*` hanya dari secret manager/environment deployment. Kontrak onboarding resmi BSI adalah sumber kebenaran endpoint, signature, header, sertifikat, dan response code; adapter real belum boleh diklaim siap sebelum kontrak itu tersedia.
