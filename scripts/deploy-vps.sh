@@ -41,6 +41,16 @@ trap finish EXIT
 
 cd "$APP_DIR"
 
+if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+
+    if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+        # NVM is not loaded automatically by non-interactive SSH sessions.
+        # shellcheck disable=SC1091
+        source "$NVM_DIR/nvm.sh"
+    fi
+fi
+
 for command in git php composer npm flock; do
     if ! command -v "$command" >/dev/null 2>&1; then
         echo "Required command is not installed: $command" >&2

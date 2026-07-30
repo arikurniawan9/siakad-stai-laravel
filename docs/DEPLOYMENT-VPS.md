@@ -50,8 +50,9 @@ npm --version
 git --version
 ```
 
-Gunakan Node yang terpasang system-wide. Instalasi berbasis NVM sering tidak
-masuk ke `PATH` pada sesi SSH non-interaktif GitHub Actions.
+Node yang terpasang system-wide dapat langsung digunakan. Script deployment
+juga memuat `$HOME/.nvm/nvm.sh` ketika `node` atau `npm` tidak tersedia pada
+`PATH` sesi SSH non-interaktif.
 
 ## 2. Buat user dan direktori aplikasi
 
