@@ -108,7 +108,10 @@ echo "Building frontend assets..."
 npm ci --no-audit --no-fund
 npm run build
 
-chmod -R ug+rwX storage bootstrap/cache
+# The web server may own files created during runtime (sessions, cache, logs).
+# The shared group permissions are provisioned once on the VPS; deployments
+# must not fail merely because the deploy user is not the owner of one file.
+find storage bootstrap/cache -type d -exec chmod ug+rwx {} + 2>/dev/null || true
 
 echo "Clearing stale caches and applying migrations..."
 php artisan optimize:clear
