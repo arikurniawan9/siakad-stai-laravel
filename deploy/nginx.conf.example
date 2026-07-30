@@ -1,9 +1,9 @@
 server {
     listen 80;
     listen [::]:80;
-    server_name siakad.example.ac.id;
+    server_name siakad-staialittihad.tech;
 
-    root /var/www/siakad/public;
+    root /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech/public;
     index index.php;
 
     charset utf-8;
@@ -26,7 +26,7 @@ server {
     error_page 404 /index.php;
 
     location ~ ^/index\.php(/|$) {
-        fastcgi_pass unix:/run/php/php8.4-fpm.sock;
+        fastcgi_pass 127.0.0.1:19000;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
         fastcgi_hide_header X-Powered-By;

@@ -3,13 +3,15 @@
 Dokumen ini memakai asumsi awal:
 
 - branch production adalah `master`;
-- server Linux memakai Nginx, PHP-FPM 8.4, MySQL, dan Redis;
-- project berada di `/var/www/siakad`;
-- user deployment bernama `siakad`;
+- server memakai CloudPanel pada Ubuntu 24.04, Nginx, PHP-FPM 8.4,
+  Percona MySQL, dan Redis;
+- project berada di `/home/siakad-staialittihad/htdocs/siakad-staialittihad.tech`;
+- user deployment bernama `siakad-staialittihad`;
 - repository GitHub dapat private;
 - HTTPS ditangani Certbot atau reverse proxy lain.
 
-Sesuaikan nama domain, versi socket PHP-FPM, user, dan path jika VPS berbeda.
+VPS yang sudah dikonfigurasi memakai domain `siakad-staialittihad.tech` dan
+upstream PHP-FPM `127.0.0.1:19000`.
 
 ## Alur deployment
 
@@ -54,60 +56,34 @@ Node yang terpasang system-wide dapat langsung digunakan. Script deployment
 juga memuat `$HOME/.nvm/nvm.sh` ketika `node` atau `npm` tidak tersedia pada
 `PATH` sesi SSH non-interaktif.
 
-## 2. Buat user dan direktori aplikasi
+## 2. User dan direktori aplikasi
 
-Jalankan sebagai root:
+CloudPanel sudah menyediakan user dan direktori berikut:
 
 ```bash
-adduser --disabled-password --gecos "" siakad
-usermod -aG www-data siakad
-mkdir -p /var/www/siakad
-chown siakad:www-data /var/www/siakad
+id siakad-staialittihad
+ls -ld /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 ```
 
 Jangan menjalankan Composer, npm, atau worker aplikasi sebagai root.
 
 ## 3. Beri VPS akses read-only ke repository GitHub
 
-Masuk sebagai user `siakad`, lalu buat key khusus VPS ke GitHub:
+Repository ini public, sehingga VPS cukup menggunakan URL HTTPS read-only.
+Clone awal dilakukan oleh user `siakad-staialittihad`:
 
 ```bash
-sudo -iu siakad
-ssh-keygen -t ed25519 -f ~/.ssh/github_siakad -C "siakad-vps-github" -N ""
-cat ~/.ssh/github_siakad.pub
+sudo -iu siakad-staialittihad
+git clone https://github.com/arikurniawan9/siakad-stai-laravel.git \
+  /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 ```
-
-Tambahkan public key tersebut di repository GitHub melalui **Settings → Deploy
-keys → Add deploy key**. Biarkan **Allow write access** tidak dicentang.
-
-Tambahkan konfigurasi SSH di VPS:
-
-```text
-Host github.com
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/github_siakad
-    IdentitiesOnly yes
-```
-
-Simpan sebagai `~/.ssh/config`, beri mode `600`, verifikasi fingerprint host
-GitHub, kemudian uji:
-
-```bash
-chmod 600 ~/.ssh/config
-ssh -T git@github.com
-git clone git@github.com:arikurniawan9/siakad-stai-laravel.git /var/www/siakad
-```
-
-Pesan GitHub bahwa autentikasi berhasil tetapi shell tidak tersedia adalah
-normal.
 
 ## 4. Siapkan environment aplikasi
 
 Di VPS:
 
 ```bash
-cd /var/www/siakad
+cd /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 cp deploy/env.production.example .env
 composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 php artisan key:generate
@@ -121,7 +97,7 @@ konfigurasi institusi. Jangan pernah commit `.env`. Nilai penting:
 ```text
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://domain-sebenarnya
+APP_URL=https://siakad-staialittihad.tech
 SESSION_SECURE_COOKIE=true
 ```
 
@@ -140,7 +116,7 @@ chmod -R ug+rwX storage bootstrap/cache
 find storage bootstrap/cache -type d -exec chmod g+s {} +
 ```
 
-Pastikan PHP-FPM (`www-data`) dan user `siakad` sama-sama dapat menulis ke
+Pastikan PHP-FPM (`www-data`) dan user `siakad-staialittihad` sama-sama dapat menulis ke
 `storage` dan `bootstrap/cache`.
 
 ## 5. Konfigurasi Nginx dan HTTPS
@@ -149,7 +125,7 @@ Salin `deploy/nginx.conf.example` ke konfigurasi Nginx, lalu ubah:
 
 - `server_name`;
 - `root` jika path project berbeda;
-- socket `php8.4-fpm.sock` sesuai versi PHP VPS.
+- upstream `127.0.0.1:19000` sesuai PHP-FPM 8.4 CloudPanel.
 
 Uji konfigurasi sebelum reload:
 
@@ -173,10 +149,10 @@ sudo systemctl enable --now siakad-queue
 sudo systemctl status siakad-queue
 ```
 
-Tambahkan scheduler lewat crontab user `siakad` (`crontab -e`):
+Tambahkan scheduler lewat crontab user `siakad-staialittihad` (`crontab -e`):
 
 ```cron
-* * * * * cd /var/www/siakad && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
 Queue worker diperlukan untuk notifikasi. Scheduler diperlukan untuk pengingat
@@ -192,7 +168,7 @@ ssh-keygen -t ed25519 -f siakad_actions_vps -C "github-actions-siakad" -N ""
 ```
 
 Tambahkan isi `siakad_actions_vps.pub` ke
-`/home/siakad/.ssh/authorized_keys` di VPS. Simpan private key
+`/home/siakad-staialittihad/.ssh/authorized_keys` di VPS. Simpan private key
 `siakad_actions_vps` sebagai secret `VPS_SSH_KEY`.
 
 Ambil host key VPS, lalu verifikasi fingerprint-nya melalui console/provider
@@ -209,8 +185,8 @@ secrets berikut:
 | --- | --- |
 | `VPS_HOST` | IP atau hostname VPS |
 | `VPS_PORT` | `22` |
-| `VPS_USER` | `siakad` |
-| `VPS_APP_PATH` | `/var/www/siakad` |
+| `VPS_USER` | `siakad-staialittihad` |
+| `VPS_APP_PATH` | `/home/siakad-staialittihad/htdocs/siakad-staialittihad.tech` |
 | `VPS_SSH_KEY` | seluruh isi private key Actions ke VPS |
 | `VPS_KNOWN_HOSTS` | output `ssh-keyscan` yang fingerprint-nya sudah diverifikasi |
 
@@ -242,7 +218,7 @@ git push origin master
 Periksa kondisi VPS:
 
 ```bash
-cd /var/www/siakad
+cd /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 git rev-parse HEAD
 php artisan about
 php artisan migrate:status
@@ -258,7 +234,7 @@ Rollback kode dapat dilakukan dengan menjalankan ulang script memakai SHA lama
 yang masih merupakan ancestor `master`:
 
 ```bash
-cd /var/www/siakad
+cd /home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 bash scripts/deploy-vps.sh SHA_COMMIT_LAMA
 ```
 

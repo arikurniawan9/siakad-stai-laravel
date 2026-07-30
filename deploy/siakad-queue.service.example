@@ -4,9 +4,9 @@ After=network.target mysql.service redis-server.service
 
 [Service]
 Type=simple
-User=siakad
-Group=www-data
-WorkingDirectory=/var/www/siakad
+User=siakad-staialittihad
+Group=siakad-staialittihad
+WorkingDirectory=/home/siakad-staialittihad/htdocs/siakad-staialittihad.tech
 ExecStart=/usr/bin/php artisan queue:work redis --sleep=3 --tries=5 --timeout=120 --max-time=3600
 Restart=always
 RestartSec=5
